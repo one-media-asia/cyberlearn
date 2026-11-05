@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
-type Course = { id?: number; title?: string; name?: string; description?: string; level?: string; category?: string };
+type Course = { id?: number; slug?: string; title?: string; name?: string; description?: string; level?: string; category?: string };
 type Lab = { id?: string; slug?: string; title?: string; name?: string; description?: string };
+
+const courseSlug = (course: Course) => course.slug || (course.title || course.name || "course").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 const starterCourses: Course[] = [
   { title: "Linux Fundamentals", category: "SYSTEMS", level: "Beginner", description: "Get comfortable with the command line, files and permissions." },
@@ -75,12 +77,12 @@ export default function Home() {
         <section id="courses">
           <div className="section-head"><div><h2>Learning paths</h2><div className="subtitle">Build your knowledge from the ground up.</div></div><span className="tag">FREE TO START</span></div>
           <div className="course-grid">
-            {courses.map((course, index) => <article className="course" key={course.id || course.title || course.name || index}>
+            {courses.map((course, index) => <Link className="course" href={`/courses/${courseSlug(course)}`} key={course.id || course.title || course.name || index}>
               <span className="tag">{course.category || "FOUNDATIONS"}</span>
               <h3>{course.title || course.name || "Cybersecurity course"}</h3>
               <p>{course.description || "A practical introduction to core cybersecurity concepts."}</p>
-              <div className="course-foot"><span>{course.level || "Beginner"}</span><span>Explore path&nbsp; →</span></div>
-            </article>)}
+              <div className="course-foot"><span>{course.level || "Beginner"}</span><span>Open course&nbsp; →</span></div>
+            </Link>)}
           </div>
         </section>
         <section id="labs">
