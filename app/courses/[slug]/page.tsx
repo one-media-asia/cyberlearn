@@ -112,7 +112,7 @@ function LinuxTerminal({ onCommand }: { onCommand: (command: string, cwd: string
         </form>
       </div>
       <div className="terminal-actions">
-        {status === "idle" || status === "error" ? <button className="btn primary" onClick={startLab} disabled={status === "starting"}>{status === "starting" ? "Starting…" : "Start Linux lab"}</button> : <button className="btn" onClick={stopLab} disabled={status !== "ready"}>{status === "stopping" ? "Stopping…" : "Stop lab"}</button>}
+        {status === "idle" || status === "error" ? <button className="btn primary" onClick={startLab}>Start Linux lab</button> : <button className="btn" onClick={stopLab} disabled={status !== "ready"}>{status === "starting" ? "Starting…" : status === "stopping" ? "Stopping…" : "Stop lab"}</button>}
         <span className="subtitle">Disposable session · restricted command set · no internet access</span>
       </div>
       {status === "error" && <p className="notice">If this is a preview deployment, the Vercel Sandbox feature may not be enabled yet.</p>}
