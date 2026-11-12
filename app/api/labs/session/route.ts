@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ sandboxName: running.name, reused: true });
     }
 
-    const name = `cyberlearn-${user.id.slice(0, 12)}-${randomUUID().slice(0, 12)}`;
+    const name = `cyberlearn-${user.id}-${randomUUID().slice(0, 12)}`;
     const sandbox = await Sandbox.create({
       name,
       image: "vercel/sandbox/universal",
