@@ -41,7 +41,6 @@ export async function POST(request: NextRequest) {
     await sandbox.runCommand("mkdir", ["-p", "/vercel/sandbox/student/work"]);
     return NextResponse.json({
       sandboxName: sandbox.name,
-      expiresAt: sandbox.expiresAt ?? null,
     });
   } catch (error) {
     console.error("Unable to start CyberLearn sandbox", error);
