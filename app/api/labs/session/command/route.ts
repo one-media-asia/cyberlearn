@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
   const parts = commandLine.match(/"[^"]*"|'[^']*'|[^\s]+/g) ?? [];
   const program = parts.shift() ?? "";
-  const args = parts.map((part) => part.replace(/^["']|["']$/g, ""));
+  const args = parts.map((part: string) => part.replace(/^["']|["']$/g, ""));
   const requestedCwd = typeof body?.cwd === "string" ? body.cwd : ROOT;
   const cwd = path.resolve(ROOT, requestedCwd);
   if (!insideWorkspace(cwd)) return NextResponse.json({ error: "That directory is outside your lab workspace." }, { status: 400 });
