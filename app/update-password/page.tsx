@@ -9,21 +9,27 @@ export default function UpdatePasswordPage() {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
-    if (!supabase) { setMessage("Supabase is not configured. Please contact support."); return; }
+    if (!supabase) { setMessage("Password updates are not configured. Please contact support."); return; }
     if (password.length < 8) { setMessage("Use at least 8 characters for your new password."); return; }
     if (password !== confirmPassword) { setMessage("The passwords do not match."); return; }
     setBusy(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setBusy(false);
-    if (error) { setMessage(error.message); return; }
-    setMessage("Your password has been updated. Taking you to your dashboard…");
-    window.setTimeout(() => router.push("/"), 1200);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) { setMessage(error.message); return; }
+      setMessage("Your password has been updated. Taking you to your dashboard…");
+      window.setTimeout(() => router.push("/"), 1200);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not update your password. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return <main className="login-wrap"><section className="login-card">
@@ -33,12 +39,15 @@ export default function UpdatePasswordPage() {
     <p className="subtitle">Enter and confirm your new CyberLearn password.</p>
     <form onSubmit={submit}>
       <label htmlFor="password">New password</label>
-      <input id="password" type="password" required minLength={8} autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} />
+      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+        <input id="password" name="password" type={showPassword ? "text" : "password"} required minLength={8} autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} style={{flex:1,minWidth:0}} />
+        <button className="btn" type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? "Hide passwords" : "Show passwords"} aria-pressed={showPassword}>{showPassword ? "Hide" : "Show"}</button>
+      </div>
       <label htmlFor="confirm-password">Confirm new password</label>
-      <input id="confirm-password" type="password" required minLength={8} autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+      <input id="confirm-password" name="confirm-password" type={showPassword ? "text" : "password"} required minLength={8} autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
       <button className="btn primary" style={{width:"100%",marginTop:12}} disabled={busy}>{busy ? "Updating…" : "Update password"}</button>
     </form>
-    {message && <p className="notice" role="status">{message}</p>}
+    {message && <p className="notice" role="status" aria-live="polite">{message}</p>}
     <Link className="notice" href="/login">← Back to sign in</Link>
   </section></main>;
 }
