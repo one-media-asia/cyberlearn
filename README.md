@@ -36,7 +36,7 @@ The `feature/linux-fundamentals-room` branch contains the first room UI and an o
 - Sandbox creation and command execution are server-side only.
 - Every lab is a disposable Vercel Sandbox microVM with `networkPolicy: "deny-all"`.
 - A student can have at most one active lab session reused by the session-start route.
-- The command API uses a restricted command allowlist and passes arguments directly to the Sandbox SDK (no shell evaluation).
+- The first terminal is a command-runner interface, not a full interactive Bash/PTY session yet. It uses a restricted command allowlist and passes arguments directly to the Sandbox SDK (no shell evaluation).
 - Students can stop their lab explicitly. Sandbox sessions also have a 45-minute timeout.
 - Lesson progress and assessment validation are still prototype-only; they are not yet saved to Django.
 
