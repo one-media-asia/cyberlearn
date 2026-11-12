@@ -24,6 +24,18 @@ export default function LoginPage() {
     else setMessage(mode === "signin" ? "Signed in successfully. Return to the dashboard." : "Account request received. Check your email if confirmation is enabled.");
   }
 
+  async function sendPasswordReset() {
+    setMessage("");
+    if (!supabase) { setMessage("Supabase is not configured. Check the Vercel environment variables."); return; }
+    if (!email.trim()) { setMessage("Enter your email address first, then choose Forgot password."); return; }
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/update-password`,
+    });
+    setBusy(false);
+    setMessage(error ? error.message : "If an account exists for that email, a password-reset link will arrive shortly. Check your inbox and spam folder.");
+  }
+
   return <main className="login-wrap"><section className="login-card">
     <Link className="brand" href="/"><span className="brand-mark">C</span> CyberLearn</Link>
     <div className="eyebrow">YOUR LEARNING ACCOUNT</div><h1>{mode === "signin" ? "Welcome back." : "Create your account."}</h1>
@@ -31,6 +43,7 @@ export default function LoginPage() {
     <form onSubmit={submit}>
       <label htmlFor="email">Email address</label><input id="email" type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} />
       <label htmlFor="password">Password</label><input id="password" type="password" required minLength={6} autoComplete={mode === "signin" ? "current-password" : "new-password"} value={password} onChange={e => setPassword(e.target.value)} />
+      {mode === "signin" && <button className="btn" type="button" onClick={sendPasswordReset} disabled={busy} style={{marginTop:4}}>Forgot password?</button>}
       <button className="btn primary" style={{width:"100%",marginTop:8}} disabled={busy}>{busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}</button>
     </form>
     {message && <p className="notice" role="status">{message}</p>}
