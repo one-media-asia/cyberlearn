@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   try {
     const active = await Sandbox.list({ tags: { owner: user.id }, limit: 5 });
     for await (const candidate of active) {
-      if (candidate.currentSession().status === "running") {
+      if (candidate.status === "running") {
         return NextResponse.json({ sandboxName: candidate.name, reused: true });
       }
     }
