@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   try {
     const sandbox = await Sandbox.get({ name });
     if (program === "help") {
-      return NextResponse.json({ output: "Available commands: pwd, ls, cd, whoami, uname, id, date, mkdir, touch, cat, head, wc, stat, file, clear, help", cwd });
+      return NextResponse.json({ output: "Available commands: pwd, ls, cd, whoami, uname, id, date, mkdir, touch, cat, head, wc, stat, file, chmod, clear, help", cwd });
     }
     if (program === "clear") return NextResponse.json({ output: "", clear: true, cwd });
     if (program === "echo") return NextResponse.json({ output: args.join(" "), cwd });
