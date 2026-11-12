@@ -20,6 +20,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const active = await Sandbox.list({ tags: { owner: user.id }, limit: 5 });
+    const running = active.sandboxes.find((item) => item.status === "running");
+    if (running) {
+      return NextResponse.json({ sandboxName: running.name, reused: true });
+    }
+
     const name = `cyberlearn-${user.id.slice(0, 12)}-${randomUUID().slice(0, 12)}`;
     const sandbox = await Sandbox.create({
       name,
