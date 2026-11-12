@@ -18,7 +18,7 @@ const courses: Record<string, { title: string; description: string; lessons: Les
   "linux-fundamentals": { title: "Linux Fundamentals", description: "Build confidence with the Linux command line, files, directories and permissions.", lessons: linuxLessons },
 };
 
-function LinuxTerminal() {
+function LinuxTerminal({ onCommand }: { onCommand: (command: string, cwd: string, output: string, exitCode: number) => void }) {
   const [sandboxName, setSandboxName] = useState("");
   const [status, setStatus] = useState<"idle" | "starting" | "ready" | "stopping" | "error">("idle");
   const [output, setOutput] = useState<string[]>(["CyberLearn Linux Lab", "Private disposable environment · outbound network blocked", "Type help to see available commands.", ""]);
@@ -89,6 +89,7 @@ function LinuxTerminal() {
       if (!response.ok) throw new Error(data.error || "Command failed.");
       if (data.cwd) setCwd(data.cwd);
       if (data.output) setOutput((lines) => [...lines, ...String(data.output).replace(/\n$/, "").split("\n")]);
+      onCommand(value, data.cwd || cwd, String(data.output || ""), Number.isInteger(data.exitCode) ? data.exitCode : 0);
     } catch (error) {
       setOutput((lines) => [...lines, error instanceof Error ? error.message : "Command failed."]);
     } finally {
@@ -132,17 +133,44 @@ export default function CoursePage() {
   const [showHint, setShowHint] = useState(false);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [labEvidence, setLabEvidence] = useState<Array<{ command: string; cwd: string; output: string; exitCode: number }>>([]);
   const progress = Math.round((completed.length / course.lessons.length) * 100);
   const lesson = course.lessons[activeLesson];
 
   function checkTask() {
-    if (activeLesson === 0 && /pwd/.test(answer.trim())) {
-      setCompleted((current) => current.includes(activeLesson) ? current : [...current, activeLesson]);
-      setFeedback("Good start. pwd is the command used to print the working directory.");
-    } else if (answer.trim().length > 15) {
-      setFeedback("Answer received. A full assessment check will be connected to the room engine.");
+    const successful = labEvidence.filter((item) => item.exitCode === 0);
+    const commands = successful.map((item) => item.command.trim().split(/\s+/)[0]);
+    const has = (name: string) => commands.includes(name);
+    let passed = false;
+    let message = "";
+
+    if (activeLesson === 0) {
+      passed = has("pwd") && has("whoami") && has("uname");
+      message = "Run pwd, whoami and uname -a successfully in the lab.";
+    } else if (activeLesson === 1) {
+      passed = successful.some((item) => item.command.startsWith("cd ") && item.cwd.endsWith("/work")) &&
+        successful.some((item) => item.command === "pwd" && item.output.includes("/work"));
+      message = "Use cd work, then run pwd while you are inside the work directory.";
+    } else if (activeLesson === 2) {
+      passed = has("mkdir") && has("touch") &&
+        successful.some((item) => item.command.startsWith("ls notes") && item.output.includes("first.txt"));
+      message = "Create notes/first.txt, then use ls notes to show that the file exists.";
+    } else if (activeLesson === 3) {
+      passed = has("id") && successful.some((item) => item.command.startsWith("ls -l") && /[rwx-]{9}/.test(item.output));
+      message = "Run id and ls -l successfully to inspect your identity and file permissions.";
     } else {
-      setFeedback("Add a little more detail, then try again. Josh can give you a hint.");
+      const explanation = answer.toLowerCase();
+      passed = explanation.includes("least privilege") &&
+        (explanation.includes("only") || explanation.includes("minimum")) &&
+        (explanation.includes("access") || explanation.includes("permission"));
+      message = "Explain least privilege and why everyday tasks should use only the minimum required access.";
+    }
+
+    if (passed) {
+      setCompleted((current) => current.includes(activeLesson) ? current : [...current, activeLesson]);
+      setFeedback("Challenge passed. Nice work — you've demonstrated the task.");
+    } else {
+      setFeedback(message + " Josh can give you a hint if you're stuck.");
     }
   }
 
@@ -161,10 +189,10 @@ export default function CoursePage() {
         <aside className="panel lesson-list"><div className="eyebrow">ROOM CONTENTS</div>{course.lessons.map((item, index) => <button key={item.title} className={`lesson-nav ${activeLesson === index ? "selected" : ""}`} onClick={() => { setActiveLesson(index); setShowHint(false); setFeedback(""); }}><span className="lesson-number">{completed.includes(index) ? "✓" : String(index + 1).padStart(2, "0")}</span><span>{item.title}</span></button>)}</aside>
         <section className="lesson-content">
           <article className="panel lesson-card"><div className="eyebrow">TASK {String(activeLesson + 1).padStart(2, "0")} / {String(course.lessons.length).padStart(2, "0")}</div><h2>{lesson.title}</h2><p>{lesson.body}</p><div className="task-box"><div className="eyebrow">YOUR MISSION</div><p>{lesson.task}</p></div><div className="lesson-actions"><button className="btn" onClick={() => setShowHint((value) => !value)}>{showHint ? "Hide hint" : "Need a hint?"}</button><button className="btn primary" onClick={() => setFeedback("Lesson marked as reviewed. Complete the practical task to demonstrate what you learned.")}>Mark lesson reviewed</button></div>{showHint && <div className="hint-box"><strong>Josh's hint</strong><p>{lesson.hint}</p></div>}</article>
-          <article className="panel assessment-card"><div className="eyebrow">PROVE YOUR UNDERSTANDING</div><h3>Task check</h3><p className="subtitle">{lesson.check}</p><textarea value={answer} onChange={(event) => setAnswer(event.target.value)} placeholder="Describe what you did or enter the command…" rows={3} /><button className="btn primary" onClick={checkTask}>Check my answer</button>{feedback && <p className="assessment-feedback" role="status">{feedback}</p>}</article>
+          <article className="panel assessment-card"><div className="eyebrow">PROVE YOUR UNDERSTANDING</div><h3>Task check</h3><p className="subtitle">{lesson.check}</p>{activeLesson === 4 && <textarea value={answer} onChange={(event) => setAnswer(event.target.value)} placeholder="Explain the principle of least privilege…" rows={3} />}{activeLesson !== 4 && <p className="notice">This challenge checks successful commands from your Linux lab session. Run the required commands, then check your answer.</p>}<button className="btn primary" onClick={checkTask}>Check my answer</button>{feedback && <p className="assessment-feedback" role="status">{feedback}</p>}</article>
         </section>
       </div>
-      {slug === "linux-fundamentals" && <LinuxTerminal />}
+      {slug === "linux-fundamentals" && <LinuxTerminal onCommand={(command, cwd, output, exitCode) => setLabEvidence((current) => [...current, { command, cwd, output, exitCode }])} />}
       <div className="room-footer"><button className="btn" disabled={activeLesson === 0} onClick={() => { setActiveLesson((value) => value - 1); setShowHint(false); setFeedback(""); }}>Previous task</button><button className="btn primary" disabled={activeLesson === course.lessons.length - 1} onClick={() => { setActiveLesson((value) => value + 1); setShowHint(false); setFeedback(""); }}>Next task →</button></div>
       <p className="notice">Prototype room: lesson completion is currently held in this browser session. Persistent progress and verified assessments will be connected to the CyberLearn room engine before launch.</p>
     </main>
