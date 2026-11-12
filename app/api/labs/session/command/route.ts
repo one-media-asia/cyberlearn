@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     if (program === "cd") {
       const next = path.resolve(cwd, args[0] || ROOT);
       if (!insideWorkspace(next)) return NextResponse.json({ error: "You can only move around inside your student workspace.", cwd }, { status: 400 });
-      const check = await sandbox.runCommand({ cmd: "test", args: ["-d", next], cwd, timeoutMs: 3000 });
+      const check = await sandbox.runCommand({ cmd: "test", args: ["-d", next], cwd });
       if (check.exitCode !== 0) return NextResponse.json({ error: `cd: no such directory: ${args[0] || ""}`, cwd }, { status: 400 });
       return NextResponse.json({ output: "", cwd: next });
     }
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Command not available in this introductory room: ${program}. Type help to see allowed commands.`, cwd }, { status: 400 });
     }
 
-    const result = await sandbox.runCommand({ cmd: program, args, cwd, timeoutMs: 7000 });
+    const result = await sandbox.runCommand({ cmd: program, args, cwd });
     const stdout = await result.stdout();
     const stderr = await result.stderr();
     return NextResponse.json({
