@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -21,7 +23,11 @@ export default function LoginPage() {
       : await supabase.auth.signUp({ email, password });
     setBusy(false);
     if (result.error) setMessage(result.error.message);
-    else setMessage(mode === "signin" ? "Signed in successfully. Return to the dashboard." : "Account request received. Check your email if confirmation is enabled.");
+    else if (mode === "signin") {
+      const requestedNext = new URLSearchParams(window.location.search).get("next");
+      const destination = requestedNext && requestedNext.startsWith("/") && !requestedNext.startsWith("//") ? requestedNext : "/";
+      router.push(destination);
+    } else setMessage("Account request received. Check your email if confirmation is enabled.");
   }
 
   async function sendPasswordReset() {
