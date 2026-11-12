@@ -32,12 +32,8 @@ export async function POST(request: NextRequest) {
     });
 
     await sandbox.runCommand("mkdir", ["-p", "/vercel/sandbox/student/work"]);
-    const terminal = await sandbox.openInteractive();
-
     return NextResponse.json({
       sandboxName: sandbox.name,
-      terminalUrl: terminal.url,
-      terminalToken: terminal.token,
       expiresAt: sandbox.expiresAt?.toISOString() ?? null,
     });
   } catch (error) {
