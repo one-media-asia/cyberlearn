@@ -25,6 +25,7 @@ function LinuxTerminal({ onCommand }: { onCommand: (command: string, cwd: string
   const [command, setCommand] = useState("");
   const [cwd, setCwd] = useState("/vercel/sandbox/student");
   const [busy, setBusy] = useState(false);
+  const [authRequired, setAuthRequired] = useState(false);
 
   async function token() {
     const { data } = await supabase?.auth.getSession() ?? { data: { session: null } };
@@ -35,6 +36,7 @@ function LinuxTerminal({ onCommand }: { onCommand: (command: string, cwd: string
     setStatus("starting");
     const accessToken = await token();
     if (!accessToken) {
+      setAuthRequired(true);
       setStatus("error");
       setOutput((lines) => [...lines, "Please sign in before starting a lab."]);
       return;
@@ -42,7 +44,9 @@ function LinuxTerminal({ onCommand }: { onCommand: (command: string, cwd: string
     try {
       const response = await fetch("/api/labs/session", { method: "POST", headers: { Authorization: `Bearer ${accessToken}` } });
       const data = await response.json();
+      if (response.status === 401) setAuthRequired(true);
       if (!response.ok) throw new Error(data.error || "Unable to start lab.");
+      setAuthRequired(false);
       setSandboxName(data.sandboxName);
       setCwd("/vercel/sandbox/student");
       setStatus("ready");
@@ -115,7 +119,8 @@ function LinuxTerminal({ onCommand }: { onCommand: (command: string, cwd: string
         {status === "idle" || status === "error" ? <button className="btn primary" onClick={startLab}>Start Linux lab</button> : <button className="btn" onClick={stopLab} disabled={status !== "ready"}>{status === "starting" ? "Starting…" : status === "stopping" ? "Stopping…" : "Stop lab"}</button>}
         <span className="subtitle">Disposable session · restricted command set · no internet access</span>
       </div>
-      {status === "error" && <p className="notice">If this is a preview deployment, the Vercel Sandbox feature may not be enabled yet.</p>}
+      {authRequired && <div className="notice" role="alert"><p>You need to sign in before starting this lab.</p><Link className="btn primary" href="/login?next=%2Fcourses%2Flinux-fundamentals">Sign in to CyberLearn</Link></div>}
+      {status === "error" && !authRequired && <p className="notice">The lab could not start. Please try again, or check the deployment configuration.</p>}
     </section>
   );
 }
