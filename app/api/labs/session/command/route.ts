@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export const maxDuration = 15;
 
 const ROOT = "/vercel/sandbox/student";
-const ALLOWED = new Set(["ls", "pwd", "whoami", "uname", "id", "date", "mkdir", "touch", "cat", "head", "wc", "stat", "file"]);
+const ALLOWED = new Set(["ls", "pwd", "whoami", "uname", "id", "date", "mkdir", "touch", "cat", "head", "wc", "stat", "file", "chmod"]);
 
 function insideWorkspace(candidate: string) {
   const relative = path.relative(ROOT, candidate);
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => null);
   const name = typeof body?.sandboxName === "string" ? body.sandboxName : "";
-  const prefix = `cyberlearn-${user.id.slice(0, 12)}-`;
+  const prefix = `cyberlearn-${user.id}-`;
   if (!name.startsWith(prefix) || name.length > 100) {
     return NextResponse.json({ error: "Invalid lab session." }, { status: 400 });
   }
