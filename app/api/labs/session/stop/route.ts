@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => null);
   const name = typeof body?.sandboxName === "string" ? body.sandboxName : "";
-  const prefix = `cyberlearn-${user.id.slice(0, 12)}-`;
+  const prefix = `cyberlearn-${user.id}-`;
   if (!name.startsWith(prefix) || name.length > 100) {
     return NextResponse.json({ error: "Invalid lab session." }, { status: 400 });
   }
