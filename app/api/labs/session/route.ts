@@ -21,9 +21,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const active = await Sandbox.list({ tags: { owner: user.id }, limit: 5 });
-    const running = active.sandboxes.find((item) => item.status === "running");
-    if (running) {
-      return NextResponse.json({ sandboxName: running.name, reused: true });
+    for await (const candidate of active) {
+      if (candidate.currentSession().status === "running") {
+        return NextResponse.json({ sandboxName: candidate.name, reused: true });
+      }
     }
 
     const name = `cyberlearn-${user.id}-${randomUUID().slice(0, 12)}`;
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
     await sandbox.runCommand("mkdir", ["-p", "/vercel/sandbox/student/work"]);
     return NextResponse.json({
       sandboxName: sandbox.name,
-      expiresAt: sandbox.expiresAt?.toISOString() ?? null,
+      expiresAt: sandbox.expiresAt ?? null,
     });
   } catch (error) {
     console.error("Unable to start CyberLearn sandbox", error);
