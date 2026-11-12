@@ -38,7 +38,9 @@ The `feature/linux-fundamentals-room` branch contains the first room UI and an o
 - A student can have at most one active lab session reused by the session-start route.
 - The first terminal is a command-runner interface, not a full interactive Bash/PTY session yet. It uses a restricted command allowlist and passes arguments directly to the Sandbox SDK (no shell evaluation).
 - Students can stop their lab explicitly. Sandbox sessions also have a 45-minute timeout.
-- Lesson progress and assessment validation are still prototype-only; they are not yet saved to Django.
+- The first four task checks inspect successful commands recorded by the room UI; the fifth checks a short written explanation. These checks are a prototype and are not authoritative server-side grading.
+- Lesson completion and command evidence currently live only in browser memory; progress is not yet saved to Django or restored after refresh.
+- Josh's current hints are static lesson hints, not a live connection to the Django Josh chat endpoint.
 
 ### Sandbox feature flag
 
